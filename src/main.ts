@@ -1,11 +1,14 @@
 import {NestFactory} from '@nestjs/core';
 import {AppModule} from './app.module';
 import {MicroserviceOptions, Transport} from '@nestjs/microservices';
-import {FIREBASE_DATABASE_URL, KAFKA_BROKER} from './config';
+import {Config} from './config';
 import {Logger, ValidationPipe} from '@nestjs/common';
 import firebaseAccount from '../secrets/firebase-key.json';
 import * as admin from 'firebase-admin';
 import * as fireorm from 'fireorm';
+import {EtcdService} from 'nestjs-etcd3';
+
+const {FIREBASE_DATABASE_URL, KAFKA_BROKER} = Config;
 
 async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
@@ -16,6 +19,9 @@ async function bootstrap() {
       }
     }
   });
+
+  const etcdService = app.get(EtcdService);
+  Object.keys(Config).forEach(key => etcdService.watch(key).subscribe(value => Config[key] = value));
 
   admin.initializeApp({
     credential: admin.credential.cert(firebaseAccount),
