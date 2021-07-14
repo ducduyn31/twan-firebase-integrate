@@ -3,7 +3,7 @@ import {AppModule} from './app.module';
 import {MicroserviceOptions, Transport} from '@nestjs/microservices';
 import {Config} from './config';
 import {Logger, ValidationPipe} from '@nestjs/common';
-import firebaseAccount from '../secrets/firebase-key.json';
+import * as firebaseAccount from '../secrets/firebase-key.json';
 import * as admin from 'firebase-admin';
 import * as fireorm from 'fireorm';
 import {EtcdService} from 'nestjs-etcd3';
@@ -11,28 +11,41 @@ import {EtcdService} from 'nestjs-etcd3';
 const {FIREBASE_DATABASE_URL, KAFKA_BROKER} = Config;
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(AppModule, {
-    transport: Transport.KAFKA,
-    options: {
-      client: {
-        brokers: [KAFKA_BROKER]
-      }
-    }
-  });
+    const app = await NestFactory.create(AppModule);
 
-  const etcdService = app.get(EtcdService);
-  Object.keys(Config).forEach(key => etcdService.watch(key).subscribe(value => Config[key] = value));
+    console.log(Reflect.ownKeys(app))
+    console.log(Reflect.get(app, 'container')['modules'])
 
-  admin.initializeApp({
-    credential: admin.credential.cert(firebaseAccount),
-    databaseURL: FIREBASE_DATABASE_URL,
-  });
 
-  fireorm.initialize(admin.firestore());
+    const etcdService = app.get(EtcdService);
+    etcdService.getClient().getAll().strings().then((config) => {
+        Object.keys(Config).forEach(key => Config[key] = config[key]);
+    }).then(() => {
+        app.connectMicroservice({
+            transport: Transport.KAFKA,
+            options: {
+                client: {
+                    brokers: [KAFKA_BROKER]
+                }
+            }
+        });
+        admin.initializeApp({
+            credential: admin.credential.cert({
+                projectId: firebaseAccount.project_id,
+                clientEmail: firebaseAccount.client_email,
+                privateKey: firebaseAccount.private_key
+            }),
+            databaseURL: FIREBASE_DATABASE_URL,
+        });
 
-  app.useGlobalPipes(new ValidationPipe());
+        fireorm.initialize(admin.firestore());
+    });
+    Object.keys(Config).forEach(key => etcdService.watch(key).subscribe(value => Config[key] = value));
 
-  const logger = new Logger('FirebaseService');
-  app.listen(() => logger.log('Started successfully'));
+    app.useGlobalPipes(new ValidationPipe());
+
+    const logger = new Logger('FirebaseService');
+    app.listen(3032);
 }
+
 bootstrap();

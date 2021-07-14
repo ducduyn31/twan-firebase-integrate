@@ -1,7 +1,9 @@
 import {Injectable} from '@nestjs/common';
 import {UserCreateMessage} from './dto/create-user.message';
 import * as admin from 'firebase-admin';
+// @ts-ignore
 import {LinkAuthRepository} from './dto/link-auth.collection';
+// @ts-ignore
 import {UserRepository} from './dto/user.collection';
 
 @Injectable()
