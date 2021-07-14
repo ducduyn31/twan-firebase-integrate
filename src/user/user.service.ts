@@ -3,8 +3,7 @@ import {UserCreateMessage} from './dto/create-user.message';
 import * as admin from 'firebase-admin';
 // @ts-ignore
 import {LinkAuthRepository} from './dto/link-auth.collection';
-// @ts-ignore
-import {UserRepository} from './dto/user.collection';
+import {User, UserRepository} from './dto/user.collection';
 
 @Injectable()
 export class UserService {
@@ -23,6 +22,10 @@ export class UserService {
         });
 
         return await Promise.all([linkAuth, createUser]);
+    }
+
+    public async getUser(userId: string): Promise<User> {
+        return await UserRepository.findById(userId);
     }
 
     public async changePassword(username: string): Promise<any> {
