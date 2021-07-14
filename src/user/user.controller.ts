@@ -1,10 +1,13 @@
 import {Controller} from '@nestjs/common';
 import {MessagePattern} from '@nestjs/microservices';
-import {KAFKA_CREATE_USER_TOPIC, KAFKA_GET_USER} from '../config';
+
+import {Config} from '../config';
 import {KafkaMessage} from 'kafkajs';
 import {UserCreateMessage} from './dto/create-user.message';
 import {UserService} from './user.service';
 import {User} from './dto/user.collection';
+
+const {KAFKA_CREATE_USER_TOPIC, KAFKA_GET_USER} = Config;
 
 @Controller()
 export class UserController {
