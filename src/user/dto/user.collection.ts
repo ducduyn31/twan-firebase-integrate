@@ -1,4 +1,4 @@
-import {Collection, getRepository} from 'fireorm';
+import {BaseFirestoreRepository, Collection, getRepository} from 'fireorm';
 
 @Collection()
 export class User {
@@ -8,4 +8,18 @@ export class User {
     fireAuthId?: string[];
 }
 
-export const UserRepository = getRepository(User);
+
+class UserRepo {
+
+    private _repository = undefined;
+
+    get Repo(): BaseFirestoreRepository<User> {
+        if (!this._repository) {
+            this._repository = getRepository(User)
+        }
+
+        return this._repository;
+    }
+}
+
+export const UserRepository = new UserRepo();

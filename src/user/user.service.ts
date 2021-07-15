@@ -1,7 +1,6 @@
 import {Injectable} from '@nestjs/common';
 import {UserCreateMessage} from './dto/create-user.message';
 import * as admin from 'firebase-admin';
-// @ts-ignore
 import {LinkAuthRepository} from './dto/link-auth.collection';
 import {User, UserRepository} from './dto/user.collection';
 
@@ -11,12 +10,12 @@ export class UserService {
         const { userId, username, password } = userRequest;
         const createdAuth = await admin.auth().createUser({ email: username, password });
 
-        const linkAuth = LinkAuthRepository.create({
+        const linkAuth = LinkAuthRepository.Repo.create({
             userId,
             authId: createdAuth.uid,
         });
 
-        const createUser = UserRepository.update({
+        const createUser = UserRepository.Repo.update({
             id: userId,
             fireAuthId: [createdAuth.uid]
         });
@@ -25,7 +24,7 @@ export class UserService {
     }
 
     public async getUser(userId: string): Promise<User> {
-        return await UserRepository.findById(userId);
+        return await UserRepository.Repo.findById(userId);
     }
 
     public async changePassword(username: string): Promise<any> {
